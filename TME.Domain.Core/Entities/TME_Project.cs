@@ -37,8 +37,8 @@ namespace TME.Domain.Core.Entities
             TME_TaskPriority taskPriority, DateTime createdOn, Guid createdByApplicationUserId, DateTime? lastUpdated,
             Guid? lastUpdatedByApplicationUserId, bool isDeleted, bool isActive)
         {
-            _taskFactory = new TME_TaskFactory(id, title, description, tME_TaskStatus, taskPriority, dueDate, createdOn,
-                createdByApplicationUserId, lastUpdated, lastUpdatedByApplicationUserId, isDeleted, isActive);
+            _taskFactory = new TME_TaskFactory(id, title, description, tME_TaskStatus, taskPriority, this, dueDate, createdOn,
+createdByApplicationUserId, lastUpdated, lastUpdatedByApplicationUserId, isDeleted, isActive);
 
             var task = _taskFactory.Create();
             
@@ -47,6 +47,23 @@ namespace TME.Domain.Core.Entities
                 this.NotificationHandler = task.NotificationHandler;
                 return null;
             }
+            return IsThereTaskInProject(ref task);
+        }
+
+        private TME_Task IsThereTaskInProject(ref TME_Task task)
+        {
+            var auxTask = task as TME_Task;
+
+            if (auxTask != null && _tasks.Where(rec => rec.Id == auxTask.Id || 
+               (rec.Description == auxTask.Description && rec.IsDeleted == false && rec.IsActive == true)).Any())
+            {
+                this.NotificationHandler.Handle(new Notifications.DomainNotification(
+                    (task.NotificationHandler.GetNotifications().Count + 1).ToString(),
+                    $"A tarefa '{auxTask.Description}' já foi inserida no projeto '{this.Description}'."));
+                
+                return null;
+            }
+            _tasks.Add(task);
             return task;
         }
     }

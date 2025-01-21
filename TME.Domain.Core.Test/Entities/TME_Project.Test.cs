@@ -59,7 +59,7 @@ namespace TME.Domain.Core.Test.Entities
             var project = new TME_Project(Guid.NewGuid(), "description", DateTime.Today, Guid.NewGuid(),
                 null, null, false, true);
 
-            Guid testTaskId = Guid.NewGuid();   //<-- O Id não pode ser vazio!
+            Guid testTaskId = Guid.NewGuid();
             Guid createdByApplicationUserId = Guid.NewGuid();
             Guid lastUpdatedByApplicationUserId = Guid.NewGuid();
             string title = "A1";    //<-- title menor igual a 2 caracteres!
@@ -105,7 +105,7 @@ namespace TME.Domain.Core.Test.Entities
             var project = new TME_Project(Guid.NewGuid(), "description", DateTime.Today, Guid.NewGuid(),
                 null, null, false, true);
 
-            Guid testTaskId = Guid.NewGuid();   //<-- O Id não pode ser vazio!
+            Guid testTaskId = Guid.NewGuid();
             Guid createdByApplicationUserId = Guid.NewGuid();
             Guid lastUpdatedByApplicationUserId = Guid.NewGuid();
             string description = "Oi";    //<-- description menor igual a 2 caracteres!
@@ -128,7 +128,7 @@ namespace TME.Domain.Core.Test.Entities
             var project = new TME_Project(Guid.NewGuid(), "description", DateTime.Today, Guid.NewGuid(),
                 null, null, false, true);
 
-            Guid testTaskId = Guid.NewGuid();   //<-- O Id não pode ser vazio!
+            Guid testTaskId = Guid.NewGuid();
             Guid createdByApplicationUserId = Guid.NewGuid();
             Guid lastUpdatedByApplicationUserId = Guid.NewGuid();
 
@@ -145,5 +145,63 @@ namespace TME.Domain.Core.Test.Entities
         }
 
 
+        [TestMethod]
+        public void ChecIsThereTaskInProjectWhenInsertingTwoTasksWithTheSameId()
+        {
+            // ARRANGE
+            var project = new TME_Project(Guid.NewGuid(), "project description", DateTime.Today, Guid.NewGuid(),
+                null, null, false, true);
+
+            Guid testTaskId = Guid.NewGuid();
+            Guid createdByApplicationUserId = Guid.NewGuid();
+            Guid lastUpdatedByApplicationUserId = Guid.NewGuid();
+
+            // ACT
+            project.AddTask(testTaskId, "task title", "task description", DateTime.Today, TME_TaskStatus.Pendente,
+                TME_TaskPriority.Alta, DateTime.MaxValue, createdByApplicationUserId, null, Guid.Empty, false, true);
+
+            // NO ERRORS
+            Assert.IsFalse(project.NotificationHandler.HasNotifications());
+            Assert.IsTrue(project.Tasks.Count == 1);
+
+            // ACT: Inserindo NOVA task com o mesmo Id (testTaskId)!
+            project.AddTask(testTaskId, "other task title", "other task description", DateTime.Today, 
+                TME_TaskStatus.Pendente, TME_TaskPriority.Alta, DateTime.MaxValue, createdByApplicationUserId, null, 
+                Guid.Empty, false, true);
+
+            // ASSERTS
+            Assert.IsTrue(project.NotificationHandler.HasNotifications());
+            Assert.IsTrue(project.NotificationHandler.GetNotifications().Where(rec => rec.Description ==
+                "A tarefa 'other task description' já foi inserida no projeto 'project description'.").Any());
+        }
+
+
+        [TestMethod]
+        public void CheckIsThereTaskInProjectWhenInsertingTwoTasksWithTheSameDescription()
+        {
+            // ARRANGE
+            var project = new TME_Project(Guid.NewGuid(), "project description", DateTime.Today, Guid.NewGuid(),
+                null, null, false, true);
+
+            Guid createdByApplicationUserId = Guid.NewGuid();
+            Guid lastUpdatedByApplicationUserId = Guid.NewGuid();
+
+            // ACT
+            project.AddTask(Guid.NewGuid(), "task title", "task description", DateTime.Today, TME_TaskStatus.Pendente,
+                TME_TaskPriority.Alta, DateTime.MaxValue, createdByApplicationUserId, null, Guid.Empty, false, true);
+
+            // NO ERRORS
+            Assert.IsFalse(project.NotificationHandler.HasNotifications());
+            Assert.IsTrue(project.Tasks.Count == 1);
+
+            // ACT: Inserindo NOVA task com a mesma Description e diferentes Ids.
+            project.AddTask(Guid.NewGuid(), "task title", "task description", DateTime.Today, TME_TaskStatus.Pendente,
+                TME_TaskPriority.Alta, DateTime.MaxValue, createdByApplicationUserId, null, Guid.Empty, false, true);
+
+            // ASSERTS
+            Assert.IsTrue(project.NotificationHandler.HasNotifications());
+            Assert.IsTrue(project.NotificationHandler.GetNotifications().Where(rec => rec.Description ==
+                "A tarefa 'task description' já foi inserida no projeto 'project description'.").Any());
+        }
     }
 }
