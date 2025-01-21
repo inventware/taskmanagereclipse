@@ -1,5 +1,6 @@
 ﻿using TME.Domain.Core.Entities;
-using System.Linq;
+using TME.Domain.Core.Enums;
+
 
 namespace TME.Domain.Core.Test.Entities
 {
@@ -18,8 +19,8 @@ namespace TME.Domain.Core.Test.Entities
             Guid lastUpdatedByApplicationUserId = Guid.NewGuid();
 
             // ACT
-            project.AddTask(testTaskId, "title", "description", DateTime.Now, 
-                Enums.TME_TaskStatus.Pendente, DateTime.Now, createdByApplicationUserId, null, Guid.Empty, false, true);
+            project.AddTask(testTaskId, "title", "description", DateTime.Now, TME_TaskStatus.Pendente, 
+                TME_TaskPriority.Alta, DateTime.Now, createdByApplicationUserId, null, Guid.Empty, false, true);
 
             // ASSERTS
             Assert.IsTrue(project.NotificationHandler.HasNotifications());
@@ -41,8 +42,8 @@ namespace TME.Domain.Core.Test.Entities
             string title = string.Empty;    //<-- title vazio!
 
             // ACT
-            project.AddTask(testTaskId, title, "description", DateTime.Now,
-                Enums.TME_TaskStatus.Pendente, DateTime.Now, createdByApplicationUserId, null, Guid.Empty, false, true);
+            project.AddTask(testTaskId, title, "description", DateTime.Now, TME_TaskStatus.Pendente, 
+                TME_TaskPriority.Alta, DateTime.Now, createdByApplicationUserId, null, Guid.Empty, false, true);
 
             // ASSERTS
             Assert.IsTrue(project.NotificationHandler.HasNotifications());
@@ -64,8 +65,8 @@ namespace TME.Domain.Core.Test.Entities
             string title = "A1";    //<-- title menor igual a 2 caracteres!
 
             // ACT
-            project.AddTask(testTaskId, title, "description", DateTime.Now,
-                Enums.TME_TaskStatus.Pendente, DateTime.Now, createdByApplicationUserId, null, Guid.Empty, false, true);
+            project.AddTask(testTaskId, title, "description", DateTime.Now, TME_TaskStatus.Pendente, 
+                TME_TaskPriority.Alta, DateTime.Now, createdByApplicationUserId, null, Guid.Empty, false, true);
 
             // ASSERTS
             Assert.IsTrue(project.NotificationHandler.HasNotifications());
@@ -87,8 +88,8 @@ namespace TME.Domain.Core.Test.Entities
             string description = string.Empty;    //<-- description vazio!
 
             // ACT
-            project.AddTask(testTaskId, "title", description, DateTime.Now,
-                Enums.TME_TaskStatus.Pendente, DateTime.Now, createdByApplicationUserId, null, Guid.Empty, false, true);
+            project.AddTask(testTaskId, "title", description, DateTime.Now, TME_TaskStatus.Pendente, 
+                TME_TaskPriority.Alta, DateTime.Now, createdByApplicationUserId, null, Guid.Empty, false, true);
 
             // ASSERTS
             Assert.IsTrue(project.NotificationHandler.HasNotifications());
@@ -110,13 +111,37 @@ namespace TME.Domain.Core.Test.Entities
             string description = "Oi";    //<-- description menor igual a 2 caracteres!
 
             // ACT
-            project.AddTask(testTaskId, "title", description, DateTime.Now,
-                Enums.TME_TaskStatus.Pendente, DateTime.Now, createdByApplicationUserId, null, Guid.Empty, false, true);
+            project.AddTask(testTaskId, "title", description, DateTime.Now, TME_TaskStatus.Pendente, 
+                TME_TaskPriority.Alta, DateTime.Now, createdByApplicationUserId, null, Guid.Empty, false, true);
 
             // ASSERTS
             Assert.IsTrue(project.NotificationHandler.HasNotifications());
             Assert.IsTrue(project.NotificationHandler.GetNotifications().Where(rec => rec.Description ==
                 "O campo Descrição deve ter mais que 2 caracteres e menos que 120.").Any());
+        }
+
+
+        [TestMethod]
+        public void CheckAddTaskWhenDueDateIsInvalid()
+        {
+            // ARRANGE
+            var project = new TME_Project(Guid.NewGuid(), "description", DateTime.Today, Guid.NewGuid(),
+                null, null, false, true);
+
+            Guid testTaskId = Guid.NewGuid();   //<-- O Id não pode ser vazio!
+            Guid createdByApplicationUserId = Guid.NewGuid();
+            Guid lastUpdatedByApplicationUserId = Guid.NewGuid();
+
+            var yesterdayDate = DateTime.Now.AddDays(-1);
+
+            // ACT
+            project.AddTask(testTaskId, "title", "description", yesterdayDate, TME_TaskStatus.Pendente,
+                TME_TaskPriority.Alta, DateTime.MaxValue, createdByApplicationUserId, null, Guid.Empty, false, true);
+
+            // ASSERTS
+            Assert.IsTrue(project.NotificationHandler.HasNotifications());
+            Assert.IsTrue(project.NotificationHandler.GetNotifications().Where(rec => rec.Description ==
+                "A data de vencimento deve ser maior ou igual a data corrente.").Any());
         }
 
 

@@ -33,11 +33,11 @@ namespace TME.Domain.Core.Entities
         public HashSet<TME_Task> Tasks { get => _tasks; }
 
 
-        public TME_Task AddTask(Guid id, string title, string description, DateTime dueDate, TME_TaskStatus tME_TaskStatus, 
-            DateTime createdOn, Guid createdByApplicationUserId, DateTime? lastUpdated, Guid? lastUpdatedByApplicationUserId, 
-            bool isDeleted, bool isActive)
+        public TME_Task AddTask(Guid id, string title, string description, DateTime dueDate, TME_TaskStatus tME_TaskStatus,
+            TME_TaskPriority taskPriority, DateTime createdOn, Guid createdByApplicationUserId, DateTime? lastUpdated,
+            Guid? lastUpdatedByApplicationUserId, bool isDeleted, bool isActive)
         {
-            _taskFactory = new TME_TaskFactory(id, title, description, dueDate, tME_TaskStatus, createdOn, 
+            _taskFactory = new TME_TaskFactory(id, title, description, tME_TaskStatus, taskPriority, dueDate, createdOn,
                 createdByApplicationUserId, lastUpdated, lastUpdatedByApplicationUserId, isDeleted, isActive);
 
             var task = _taskFactory.Create();

@@ -6,15 +6,16 @@ namespace TME.Domain.Core.Factories
 {
     public class TME_TaskFactory
     {
-        public TME_TaskFactory(Guid? id, string title, string description, DateTime dueDate, TME_TaskStatus taskStatus,
-            DateTime createdOn, Guid createdByApplicationUserId, DateTime? lastUpdated, Guid? 
-            lastUpdatedByApplicationUserId, bool isDeleted, bool isActive)
+        public TME_TaskFactory(Guid? id, string title, string description, TME_TaskStatus taskStatus, TME_TaskPriority 
+            taskPriority, DateTime dueDate, DateTime createdOn, Guid createdByApplicationUserId, DateTime? lastUpdated, 
+            Guid? lastUpdatedByApplicationUserId, bool isDeleted, bool isActive)
         {
             Id = id;
             Title = title;
             Description = description;
             DueDate = dueDate;
             TaskStatus = taskStatus;
+            TaskPriority = taskPriority;
 
             // Base
             CreatedOn = createdOn;
@@ -36,6 +37,8 @@ namespace TME.Domain.Core.Factories
 
         public TME_TaskStatus TaskStatus { get; private set; }
 
+        public TME_TaskPriority TaskPriority { get; private set; }
+
         public DateTime CreatedOn { get; private set; }
 
         public Guid CreatedByApplicationUserId { get; private set; }
@@ -51,8 +54,8 @@ namespace TME.Domain.Core.Factories
 
         public TME_Task Create()
         {
-            var task = new TME_Task(Id, Title, Description, DueDate, TaskStatus, CreatedOn, CreatedByApplicationUserId,
-                LastUpdated, LastUpdatedByApplicationUserId, IsDeleted, IsActive);
+            var task = new TME_Task(Id, Title, Description, DueDate, TaskStatus, TME_TaskPriority.Alta, CreatedOn, 
+                CreatedByApplicationUserId, LastUpdated, LastUpdatedByApplicationUserId, IsDeleted, IsActive);
 
             if (Id == Guid.Empty){
                 task.NotificationHandler.Handle(new Notifications.DomainNotification(
@@ -62,7 +65,7 @@ namespace TME.Domain.Core.Factories
             return CheckTitle(ref task);
         }
 
-        public TME_Task CheckTitle(ref TME_Task task)
+        private TME_Task CheckTitle(ref TME_Task task)
         {
             if (string.IsNullOrEmpty(Title))
             {
@@ -82,7 +85,7 @@ namespace TME.Domain.Core.Factories
             return CheckDescription(ref task);
         }
 
-        public TME_Task CheckDescription(ref TME_Task task)
+        private TME_Task CheckDescription(ref TME_Task task)
         {
             if (string.IsNullOrEmpty(Description))
             {
@@ -99,7 +102,17 @@ namespace TME.Domain.Core.Factories
                         "O campo Descrição deve ter mais que 2 caracteres e menos que 120."));
                 }
             }
+            return CheckDueDate(ref task);
+        }
 
+        private TME_Task CheckDueDate(ref TME_Task task)
+        {
+            if (DueDate < DateTime.Now)
+            {
+                task.NotificationHandler.Handle(new Notifications.DomainNotification(
+                    (task.NotificationHandler.GetNotifications().Count + 1).ToString(),
+                        "A data de vencimento deve ser maior ou igual a data corrente."));
+            }
             return task;
         }
     }

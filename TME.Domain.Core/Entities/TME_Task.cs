@@ -14,16 +14,17 @@ namespace TME.Domain.Core.Entities
         
         }
 
-        public TME_Task(Guid? id, string title, string description, DateTime dueDate, TME_TaskStatus tME_TaskStatus, 
-            DateTime createdOn, Guid createdByApplicationUserId, DateTime? lastUpdated, Guid? 
-            lastUpdatedByApplicationUserId, bool isDeleted, bool isActive)
+        public TME_Task(Guid? id, string title, string description, DateTime dueDate, TME_TaskStatus taskStatus,
+            TME_TaskPriority taskPriority, DateTime createdOn, Guid createdByApplicationUserId, DateTime? lastUpdated, 
+            Guid? lastUpdatedByApplicationUserId, bool isDeleted, bool isActive)
         : base(id.GetValueOrDefault(), null, createdOn, createdByApplicationUserId, lastUpdated,
               lastUpdatedByApplicationUserId, isDeleted, isActive)
         {
             Title = title;
             Description = description;
             DueDate = dueDate;
-            TME_TaskStatus = tME_TaskStatus;
+            TaskStatus = taskStatus;
+            TaskPriority = taskPriority;
         }
 
 
@@ -33,6 +34,8 @@ namespace TME.Domain.Core.Entities
 
         public DateTime DueDate { get; protected set; }
 
-        public TME_TaskStatus TME_TaskStatus { get; protected set; }
+        public TME_TaskStatus TaskStatus { get; protected set; }
+
+        public TME_TaskPriority TaskPriority { get; protected set; }
     }
 }
