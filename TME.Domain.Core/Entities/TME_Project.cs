@@ -1,4 +1,5 @@
-﻿using TME.Domain.Core.Enums;
+﻿using System.Threading.Tasks;
+using TME.Domain.Core.Enums;
 using TME.Domain.Core.Factories;
 
 
@@ -12,7 +13,7 @@ namespace TME.Domain.Core.Entities
         /// <summary>
         /// IMPORTANTE: Usado SOMENTE pelo EF
         /// </summary>
-        public TME_Project()
+        internal TME_Project()
             : base(Guid.Empty, null, DateTime.MinValue, Guid.Empty, DateTime.MinValue, Guid.Empty, false, false)
         {
             _tasks = new HashSet<TME_Task>();
@@ -38,7 +39,7 @@ namespace TME.Domain.Core.Entities
             Guid? lastUpdatedByApplicationUserId, bool isDeleted, bool isActive)
         {
             _taskFactory = new TME_TaskFactory(id, title, description, tME_TaskStatus, taskPriority, this, dueDate, createdOn,
-createdByApplicationUserId, lastUpdated, lastUpdatedByApplicationUserId, isDeleted, isActive);
+                createdByApplicationUserId, lastUpdated, lastUpdatedByApplicationUserId, isDeleted, isActive);
 
             var task = _taskFactory.Create();
             
@@ -63,8 +64,54 @@ createdByApplicationUserId, lastUpdated, lastUpdatedByApplicationUserId, isDelet
                 
                 return null;
             }
+            return IsThereMoreThan20TasksInProject(ref task);
+        }
+
+        private TME_Task IsThereMoreThan20TasksInProject(ref TME_Task task)
+        {
+            if (_tasks.Count >= 20)
+            {
+                this.NotificationHandler.Handle(new Notifications.DomainNotification(
+                    (task.NotificationHandler.GetNotifications().Count + 1).ToString(),
+                    $"O projeto '{this.Description}' não pode receber mais tarefas, pois já possui 20 tarefas cadastradas."));
+
+                return null;
+            }
+
             _tasks.Add(task);
+            
             return task;
+        }
+
+        public TME_Task UpdateTask(string taskTitle, string taskDescription, DateTime dueDate, TME_TaskStatus taskStatus, 
+            TME_TaskPriority taskPriority, Guid loggedUserId)
+        {
+            var taskToUpdate = _tasks.Where(rec => rec.Description == taskDescription).FirstOrDefault();
+            if (taskToUpdate == null){
+                return null;
+            }
+
+            var newTask = new TME_Task(taskToUpdate.Id, taskTitle, taskDescription, dueDate, taskStatus, taskPriority, this,
+                taskToUpdate.CreatedOn, taskToUpdate.CreatedByApplicationUserId, DateTime.Today, loggedUserId,
+                taskToUpdate.IsDeleted, taskToUpdate.IsActive);
+            if (newTask.NotificationHandler.HasNotifications()){
+                return null;
+            }
+
+            _tasks.Remove(taskToUpdate);
+            _tasks.Add(newTask);
+            return newTask;
+        }
+
+        public bool RemoveTask(string taskDescription)
+        {
+            var taskToRemove = _tasks.Where(rec => rec.Description == taskDescription).FirstOrDefault();
+            if (taskToRemove == null){
+                return false;
+            }
+
+            _tasks.Remove(taskToRemove);
+            return true;
         }
     }
 }
